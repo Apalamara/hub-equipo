@@ -160,6 +160,57 @@ section[hidden] { display: none; }
 .totales { margin-top: 20px; color: var(--gris); }
 .totales b { color: var(--tinta); }
 
+/* ---------- stock ---------- */
+.stock { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 22px; }
+.item {
+  background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio);
+  padding: 20px; display: flex; flex-direction: column; gap: 6px;
+}
+.item.bajo { border-color: #f3c9b5; background: var(--alerta-claro); }
+.item h3 { font-size: 19px; }
+.item .num { font-size: 52px; font-weight: 600; line-height: 1.05; }
+.item small { color: var(--gris); font-size: 13px; }
+.pill { align-self: flex-start; border-radius: 8px; padding: 3px 10px; font-weight: 700; font-size: 14px; background: var(--verde-claro); color: var(--verde); }
+.item.bajo .pill { background: var(--alerta); color: #fff; }
+.acciones { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+.boton {
+  border: 1px solid var(--borde); background: var(--blanco); border-radius: 12px;
+  padding: 10px 20px; min-height: 48px; font-weight: 700;
+}
+.boton.primario { background: var(--azul); border-color: var(--azul); color: #fff; }
+.boton:disabled { opacity: .5; cursor: default; }
+.form { background: var(--blanco); border: 1px solid var(--azul-medio); border-radius: var(--radio); padding: 20px 22px; margin-top: 16px; }
+.form h3 { font-size: 20px; }
+.campos { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 14px 0; }
+.campos label, .form .nota-campo { display: flex; flex-direction: column; gap: 4px; font-weight: 500; font-size: 15px; }
+.form input {
+  font: inherit; border: 1px solid var(--borde); border-radius: 10px; padding: 10px 12px; min-height: 48px;
+  width: 100%; background: var(--fondo); color: var(--tinta);
+}
+.form input[type=number] { font: 600 22px Outfit, sans-serif; }
+.movs { margin-top: 28px; }
+.movs h2 { font-size: 22px; margin-bottom: 10px; }
+.movs ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.movs li { background: var(--blanco); border: 1px solid var(--borde); border-radius: 12px; padding: 12px 16px; }
+.movs li b { font-family: Outfit, sans-serif; }
+.movs li span { color: var(--gris); font-size: 14px; }
+
+/* ---------- eventos ---------- */
+.ev-grupo { margin-top: 28px; }
+.ev-grupo > h2 { font-size: 22px; margin-bottom: 10px; text-transform: capitalize; }
+.eventos { display: grid; gap: 10px; }
+.evento {
+  background: var(--blanco); border: 1px solid var(--borde); border-radius: var(--radio);
+  padding: 14px 18px; display: grid; grid-template-columns: 92px 1fr; gap: 4px 16px; align-items: start;
+}
+.evento.cerca { border-color: var(--azul); box-shadow: 0 0 0 1px var(--azul); }
+.evento .cuando { font: 600 17px Outfit, sans-serif; line-height: 1.25; }
+.evento .cuando small { display: block; color: var(--gris); font: 400 13px 'DM Sans', sans-serif; }
+.evento h3 { font-size: 18px; }
+.evento p { margin: 2px 0 0; color: var(--gris); font-size: 15px; }
+.evento img, .tarjeta img { width: 100%; max-width: 420px; border-radius: 10px; margin-top: 10px; display: block; }
+.area { display: inline-block; border-radius: 6px; padding: 1px 8px; font-size: 13px; font-weight: 700; margin-bottom: 4px; background: var(--a-fondo, #e9edf3); color: var(--a-texto, #46536a); }
+
 /* ---------- manual ---------- */
 .indice { display: flex; gap: 8px; flex-wrap: wrap; margin: 18px 0 28px; }
 .indice a {
@@ -195,6 +246,8 @@ section[hidden] { display: none; }
 /* iPad vertical y celulares: el calendario pasa a tarjetas apiladas */
 @media (max-width: 820px) {
   .turnos, .materiales { grid-template-columns: 1fr; }
+  .stock, .campos { grid-template-columns: 1fr 1fr; }
+  .item .num { font-size: 40px; }
   .material { flex-direction: row; justify-content: space-between; padding: 16px; }
   .material > div:first-child { display: flex; flex-direction: column; min-width: 0; }
   .material h3 { font-size: 19px; }
@@ -206,6 +259,7 @@ section[hidden] { display: none; }
   .turno .num { font-size: 34px; }
   .turno .gente { margin-top: 0; margin-left: auto; }
   .dia { grid-template-columns: 1fr; }
+  .evento { grid-template-columns: 1fr; }
   .fecha { border-right: 0; border-bottom: 1px solid var(--borde); flex-direction: row; align-items: baseline; gap: 10px; padding: 12px 16px; }
   .fecha .num { font-size: 26px; }
   .celda { border-right: 0; border-bottom: 1px solid var(--borde); flex-direction: row; align-items: center; justify-content: space-between; }
@@ -213,8 +267,10 @@ section[hidden] { display: none; }
 @media (max-width: 560px) {
   .barra { padding: 12px 16px; }
   main { padding: 20px 16px 48px; }
-  nav { width: 100%; }
-  nav button { flex: 1; padding: 9px 8px; }
+  /* seis pestañas no entran en un celular: la barra se desliza de costado */
+  nav { width: 100%; overflow-x: auto; scrollbar-width: none; }
+  nav::-webkit-scrollbar { display: none; }
+  nav button { flex: 1 0 auto; padding: 9px 12px; }
   .turno .gente { margin-left: 0; width: 100%; }
 }
 </style>
@@ -228,6 +284,9 @@ section[hidden] { display: none; }
       <button data-vista="hoy" aria-current="page">Domingo</button>
       <button data-vista="turnos">Turnos</button>
       <button data-vista="entregas">Entregas</button>
+      <button data-vista="eventos">Eventos</button>
+      <button data-vista="stock">Stock</button>
+      <button data-vista="info">Info</button>
       <button data-vista="manual">Manual</button>
     </nav>
   </div>
@@ -240,6 +299,9 @@ section[hidden] { display: none; }
   <section id="v-hoy" hidden></section>
   <section id="v-turnos" hidden></section>
   <section id="v-entregas" hidden></section>
+  <section id="v-eventos" hidden></section>
+  <section id="v-stock" hidden></section>
+  <section id="v-info" hidden></section>
   <section id="v-manual" hidden></section>
 
   <p class="pie" id="pie" hidden></p>
@@ -375,6 +437,17 @@ function vistaHoy() {
   }
 
   html += avisoProximo(g, dom);
+  const semana = estaSemana();
+  if (semana.length) {
+    html += `<div class="ev-grupo"><div class="rotulo">Esta semana en la iglesia</div><div class="eventos">${
+      semana.map(e => tarjetaEvento(e, cuandoFecha(e))).join('')}</div>
+      <p style="margin:10px 0 0"><button class="boton" data-ir="eventos">Ver todos los eventos</button></p></div>`;
+  }
+  const bajos = calcularStock().filter(i => i.bajo);
+  if (bajos.length) {
+    html += `<div class="aviso" style="border-color:#f3c9b5;background:var(--alerta-claro)"><span>Stock bajo</span><b>${
+      bajos.map(i => `${i.queda} ${i.nombre.toLowerCase()}`).join(' · ')}</b><button class="boton" data-ir="stock">Ver stock</button></div>`;
+  }
   $('#v-hoy').innerHTML = html;
 }
 
@@ -478,6 +551,239 @@ function vistaManual() {
       </div>`).join('')}`;
 }
 
+// ---------- imagenes ----------
+
+// En el Sheet va el link de Drive tal cual se copia ("Compartir > cualquier
+// persona con el link"); se muestra la miniatura grande de Drive. Cualquier
+// otra URL de imagen tambien sirve.
+function imagen(link) {
+  const url = String(link || '').trim();
+  if (!/^https:\/\//.test(url)) return '';
+  const id = (url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?.*id=)([\w-]+)/) || [])[1];
+  const src = id ? `https://drive.google.com/thumbnail?id=${id}&sz=w1200` : url;
+  return `<a href="${esc(url)}" target="_blank" rel="noopener"><img src="${esc(src)}" alt="" loading="lazy"></a>`;
+}
+
+// ---------- vista: eventos ----------
+
+// Los colores de cada area, como en el calendario de la iglesia. Un area
+// nueva sale en gris hasta que se agregue aca.
+const AREAS = {
+  'worship':        ['#ececec', '#4a4a4a'],
+  'peace':          ['#e2f2dc', '#3d6b2c'],
+  'cr':             ['#eef1f5', '#46536a'],
+  'cr (sym)':       ['#eef1f5', '#46536a'],
+  'jóvenes':        ['#f6e3fa', '#86308f'],
+  'gam':            ['#dde4f0', '#1f3a68'],
+  'conexiones':     ['#fdf0cc', '#7a5800'],
+  'crec. esp.':     ['#dfeaf7', '#2b5a8c'],
+  'grupos pequeños':['#e3ecff', '#1f4fb8'],
+};
+const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+const sinTilde = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+function area(nombre) {
+  if (!nombre) return '';
+  const c = AREAS[String(nombre).toLowerCase().trim()];
+  return `<span class="area" ${c ? `style="--a-fondo:${c[0]};--a-texto:${c[1]}"` : ''}>${esc(nombre)}</span>`;
+}
+
+function eventosDe() {
+  const ev = estado.datos.Eventos || [];
+  return {
+    fechados: ev.filter(e => e.Fecha && !e.Hasta).sort((a, b) => (a.Fecha + (a.Hora || '')).localeCompare(b.Fecha + (b.Hora || ''))),
+    temporadas: ev.filter(e => e.Fecha && e.Hasta),
+    semanales: ev.filter(e => !e.Fecha && e['Día'])
+      .sort((a, b) => DIAS.map(sinTilde).indexOf(sinTilde(a['Día'])) - DIAS.map(sinTilde).indexOf(sinTilde(b['Día']))),
+  };
+}
+
+function tarjetaEvento(e, cuando, cerca) {
+  return `<div class="evento${cerca ? ' cerca' : ''}">
+    <div class="cuando">${cuando}</div>
+    <div>${area(e['Área'])}<h3>${esc(e.Evento)}</h3>${e.Nota ? `<p>${esc(e.Nota)}</p>` : ''}${imagen(e.Imagen)}</div>
+  </div>`;
+}
+
+function cuandoFecha(e) {
+  const d = fechaDe(e.Fecha);
+  return `${DIAS[d.getDay()].slice(0, 3)} ${d.getDate()}/${d.getMonth() + 1}${e.Hora ? `<small>${esc(hora(e.Hora))} hs</small>` : ''}`;
+}
+
+// Lo que pasa en la iglesia de hoy a 7 dias: para la pestaña Domingo.
+function estaSemana() {
+  const hoy = iso(new Date());
+  const fin = new Date(); fin.setDate(fin.getDate() + 7);
+  return eventosDe().fechados.filter(e => e.Fecha >= hoy && e.Fecha <= iso(fin));
+}
+
+function vistaEventos() {
+  const { fechados, temporadas, semanales } = eventosDe();
+  const hoy = iso(new Date());
+  const pronto = new Date(); pronto.setDate(pronto.getDate() + 7);
+  const proximos = fechados.filter(e => e.Fecha >= hoy);
+  const vigentes = temporadas.filter(e => e.Hasta >= hoy);
+
+  let html = `
+    <div class="rotulo">Eventos</div>
+    <h1 style="font-size:clamp(30px,4.4vw,44px)">Qué pasa en la iglesia</h1>
+    <p class="sub">Para saber qué contestar si alguien pregunta en el Hub.</p>`;
+
+  if (vigentes.length) {
+    html += `<div class="ev-grupo"><h2>En temporada</h2><div class="eventos">${vigentes.map(e =>
+      tarjetaEvento(e, `hasta ${fechaCorta(e.Hasta)}<small>desde ${fechaCorta(e.Fecha)}</small>`)).join('')}</div></div>`;
+  }
+  if (semanales.length) {
+    html += `<div class="ev-grupo"><h2>Todas las semanas</h2><div class="eventos">${semanales.map(e =>
+      tarjetaEvento(e, `${esc(e['Día'])}${e.Hora ? `<small>${esc(hora(e.Hora))} hs</small>` : ''}`)).join('')}</div></div>`;
+  }
+  // los proximos, agrupados por mes
+  const meses = [...new Set(proximos.map(e => e.Fecha.slice(0, 7)))];
+  html += meses.map(m => {
+    const [a, n] = m.split('-').map(Number);
+    return `<div class="ev-grupo"><h2>${MESES[n - 1]}${a !== new Date().getFullYear() ? ' ' + a : ''}</h2><div class="eventos">${
+      proximos.filter(e => e.Fecha.startsWith(m)).map(e => tarjetaEvento(e, cuandoFecha(e), e.Fecha <= iso(pronto))).join('')}</div></div>`;
+  }).join('');
+  if (!proximos.length && !semanales.length && !vigentes.length) {
+    html += `<div class="vacio-mes" style="margin-top:22px">Todavía no hay eventos cargados en la pestaña Eventos del Sheet.</div>`;
+  }
+  $('#v-eventos').innerHTML = html;
+}
+
+// ---------- vista: info ----------
+
+// Lo que el equipo tiene que saber: pestaña "Info" del Sheet, una tarjeta por
+// fila (Orden, Título, Texto), con el mismo formato de texto que el Manual.
+function vistaInfo() {
+  const items = (estado.datos.Info || []).slice().sort((a, b) => Number(a.Orden) - Number(b.Orden));
+  $('#v-info').innerHTML = `
+    <div class="rotulo">Info</div>
+    <h1 style="font-size:clamp(30px,4.4vw,44px)">Lo que hay que saber</h1>
+    <div class="tarjetas" style="margin-top:22px">${items.length ? items.map(it => `
+      <article class="tarjeta"><h3>${esc(it['Título'])}</h3>${textoManual(it.Texto)}${imagen(it.Imagen)}</article>`).join('')
+      : '<div class="vacio-mes">Todavía no hay nada cargado en la pestaña Info del Sheet.</div>'}</div>`;
+}
+
+// ---------- vista: stock ----------
+
+// Lo que queda de cada cosa = ultimo recuento + compras posteriores - entregas
+// posteriores. Las tarjetas van con cada chocolate. Un recuento sin hora (los
+// viejos) cuenta lo que habia al final de ese dia.
+const STOCK = [
+  ['Chocolates', 'comprar'],
+  ['Bolsas', 'comprar'],
+  ['Biblias', 'comprar'],
+  ['Tarjetas', 'imprimir'],
+];
+const MINIMOS = { Chocolates: 10, Bolsas: 50, Biblias: 30, Tarjetas: 50 }; // si el Sheet tiene una fila "Mínimo", manda esa
+const stk = { form: null, guardando: false, error: '' };
+
+function momento(fecha, h) {
+  if (!h) return fecha + ' 99:99';
+  const [hh, mm] = String(h).split(':');
+  return fecha + ' ' + hh.padStart(2, '0') + ':' + (mm || '00');
+}
+const vacio = v => v === '' || v == null;
+
+function calcularStock() {
+  const filas = estado.datos.Stock || [];
+  const entregas = estado.datos.Entregas || [];
+  const minimos = { ...MINIMOS };
+  filas.filter(f => f.Tipo === 'Mínimo').forEach(f => STOCK.forEach(([m]) => { if (!vacio(f[m])) minimos[m] = Number(f[m]); }));
+  // los ultimos cuatro domingos con entregas, para estimar cuanto dura
+  const domingos = [...new Set(entregas.map(f => f.Fecha))].sort().slice(-4);
+
+  return STOCK.map(([nombre, accion]) => {
+    const col = nombre === 'Tarjetas' ? 'Chocolates' : nombre;
+    const rec = filas.filter(f => f.Tipo === 'Recuento' && !vacio(f[nombre]))
+      .sort((a, b) => momento(a.Fecha, a.Hora).localeCompare(momento(b.Fecha, b.Hora))).pop();
+    const item = { nombre, accion, min: minimos[nombre], queda: null, rec };
+    if (!rec) return item;
+    const desde = momento(rec.Fecha, rec.Hora);
+    const entra = filas.filter(f => f.Tipo === 'Compra' && momento(f.Fecha, f.Hora) > desde)
+      .reduce((a, f) => a + (Number(f[nombre]) || 0), 0);
+    const sale = entregas.filter(f => momento(f.Fecha, f['Reunión']) > desde)
+      .reduce((a, f) => a + (Number(f[col]) || 0), 0);
+    item.queda = Math.max(0, Number(rec[nombre]) + entra - sale);
+    item.bajo = item.queda <= item.min;
+    const porDomingo = domingos.length ? entregas.filter(f => domingos.includes(f.Fecha))
+      .reduce((a, f) => a + (Number(f[col]) || 0), 0) / domingos.length : 0;
+    if (porDomingo >= 0.5) item.dura = Math.floor(item.queda / porDomingo);
+    return item;
+  });
+}
+
+function fechaCorta(f) { const d = fechaDe(f); return `${d.getDate()}/${d.getMonth() + 1}`; }
+
+function vistaStock() {
+  const items = calcularStock();
+  const movs = (estado.datos.Stock || []).filter(f => f.Tipo === 'Recuento' || f.Tipo === 'Compra')
+    .sort((a, b) => momento(b.Fecha, b.Hora).localeCompare(momento(a.Fecha, a.Hora))).slice(0, 6);
+
+  let html = `
+    <div class="rotulo">Stock</div>
+    <h1 style="font-size:clamp(30px,4.4vw,44px)">Lo que nos queda</h1>
+    <p class="sub">Sale del último recuento, más lo que se compró, menos lo que se entregó después.</p>
+    <div class="stock">${items.map(i => `
+      <div class="item${i.bajo ? ' bajo' : ''}">
+        <h3>${i.nombre}</h3>
+        <div class="num">${i.queda == null ? '—' : i.queda}</div>
+        <span class="pill">${i.queda == null ? 'Sin recuento' : i.bajo ? 'Hay que ' + i.accion : 'Alcanza'}</span>
+        <small>Mínimo ${i.min}${i.dura == null ? '' : i.dura ? ` · alcanza para ~${i.dura} domingo${i.dura === 1 ? '' : 's'}` : ' · no llega a un domingo'}</small>
+        ${i.rec ? `<small>Contado el ${fechaCorta(i.rec.Fecha)}</small>` : ''}
+        ${i.nombre === 'Tarjetas' ? '<small>Se gasta una con cada chocolate</small>' : ''}
+      </div>`).join('')}</div>
+    <div class="acciones">
+      <button class="boton${stk.form === 'Recuento' ? ' primario' : ''}" data-stock-form="Recuento">Contamos lo que hay</button>
+      <button class="boton${stk.form === 'Compra' ? ' primario' : ''}" data-stock-form="Compra">Llegó una compra</button>
+    </div>`;
+
+  if (stk.form) {
+    const esRec = stk.form === 'Recuento';
+    html += `<form class="form" id="formStock">
+      <h3>${esRec ? 'Recuento' : 'Compra'}</h3>
+      <p class="sub">${esRec ? 'Contá lo que hay ahora mismo. Lo que no contaste, dejalo vacío.' : 'Cuánto llegó de cada cosa. Lo que no se compró, dejalo vacío.'}</p>
+      <div class="campos">${STOCK.map(([m]) => `
+        <label>${m}<input type="number" inputmode="numeric" min="0" max="10000" name="${m}"></label>`).join('')}</div>
+      <label class="nota-campo">Nota (opcional)<input type="text" name="nota" maxlength="200"></label>
+      <div class="acciones" style="margin-top:14px">
+        <button class="boton primario" type="submit" ${stk.guardando ? 'disabled' : ''}>${stk.guardando ? 'Guardando…' : 'Guardar'}</button>
+        <button class="boton" type="button" data-stock-form="">Cancelar</button>
+      </div>
+      <div class="guardando${stk.error ? ' error' : ''}">${esc(stk.error)}</div>
+    </form>`;
+  }
+
+  if (movs.length) {
+    html += `<div class="movs"><h2>Últimos movimientos</h2><ul>${movs.map(f => `
+      <li><b>${f.Tipo === 'Compra' ? 'Compra' : 'Recuento'} · ${fechaCorta(f.Fecha)}</b>
+        ${STOCK.filter(([m]) => !vacio(f[m])).map(([m]) => `${f.Tipo === 'Compra' ? '+' : ''}${esc(f[m])} ${m.toLowerCase()}`).join(' · ')}
+        ${f.Nota ? `<br><span>${esc(f.Nota)}</span>` : ''}</li>`).join('')}</ul></div>`;
+  }
+  $('#v-stock').innerHTML = html;
+}
+
+async function guardarStock(form) {
+  const valores = {};
+  STOCK.forEach(([m]) => { const v = form.elements[m].value.trim(); if (v !== '') valores[m] = Number(v); });
+  if (!Object.keys(valores).length) { stk.error = 'Poné al menos una cantidad.'; return vistaStock(); }
+  stk.guardando = true; stk.error = '';
+  vistaStock();
+  try {
+    const r = await fetch(API, { method: 'POST', body: JSON.stringify({
+      clave: clave(), accion: 'stock', tipo: stk.form, valores, nota: form.elements.nota.value.trim() }) });
+    const j = await r.json();
+    if (j.error) throw new Error(j.error);
+    (estado.datos.Stock = estado.datos.Stock || []).push(j.fila);
+    guardado.escribir('datos', JSON.stringify(estado.datos));
+    stk.form = null;
+  } catch (err) {
+    stk.error = 'No se guardó. Revisá la conexión y probá de nuevo.';
+  }
+  stk.guardando = false;
+  vistaStock(); vistaHoy();
+}
+
 // ---------- vista: entregas ----------
 
 const MATERIALES = [
@@ -485,7 +791,7 @@ const MATERIALES = [
   ['Bolsas', 'segunda vez'],
   ['Biblias', 'aceptaron a Jesús'],
 ];
-const ent = { fecha: null, reunion: null, pendientes: 0, error: '' };
+const ent = { fecha: null, reunion: null, elegida: false, pendientes: 0, error: '' };
 
 // Para anotar: hoy si es domingo; si no, el ultimo domingo (para cargar tarde).
 function domingoParaAnotar() {
@@ -514,12 +820,15 @@ function esDomingoHoy(fecha) {
   const hoy = new Date();
   return hoy.getDay() === 0 && fecha === iso(hoy);
 }
+// El domingo se puede anotar en cualquier horario hasta la medianoche (a veces
+// se cargan tarde). El lunes ese domingo ya queda cerrado.
 function puedeAnotar(fecha, reunion) {
-  return esDomingoHoy(fecha) && reunion === reunionActual(fecha, reunionesDe(fecha));
+  return esDomingoHoy(fecha) && reunionesDe(fecha).includes(reunion);
 }
 
 // A las 9, 11 y 17 (la llegada de cada reunion) la pantalla pasa sola al
-// horario siguiente, aunque el iPad quede abierto en Entregas toda la mañana.
+// horario siguiente, aunque el iPad quede abierto en Entregas toda la mañana
+// (salvo que alguien haya elegido otro horario a mano).
 setInterval(() => {
   if (estado.datos && !$('#v-entregas').hidden && !ent.pendientes) vistaEntregas();
 }, 60000);
@@ -532,10 +841,10 @@ function vistaEntregas() {
   if (!estado.datos.Entregas) estado.datos.Entregas = [];
   if (!ent.fecha) ent.fecha = domingoParaAnotar();
   const lista = reunionesDe(ent.fecha);
-  // Solo se anota el domingo de hoy y en la reunion en curso: la de hoy queda
-  // fija. Los domingos pasados se pueden mirar horario por horario, sin tocar.
+  // Solo se anota el domingo de hoy. Arranca en la reunion en curso, pero se
+  // puede pasar a otro horario. Los domingos pasados se miran, sin tocar.
   const actual = esDomingoHoy(ent.fecha) ? reunionActual(ent.fecha, lista) : null;
-  if (actual) ent.reunion = actual;
+  if (actual && !ent.elegida) ent.reunion = actual;
   else if (!ent.reunion || !lista.includes(ent.reunion)) ent.reunion = lista[0];
   const editable = puedeAnotar(ent.fecha, ent.reunion);
   const d = fechaDe(ent.fecha);
@@ -556,7 +865,7 @@ function vistaEntregas() {
       <button class="flecha" data-ent-fecha="${puedeSig ? iso(sig) : ''}" ${puedeSig ? '' : 'disabled'} aria-label="Domingo siguiente">›</button>
     </div>
     <div class="horarios">${lista.map(r =>
-      `<button data-reunion="${esc(r)}" aria-pressed="${r === ent.reunion}" ${actual && r !== actual ? 'disabled' : ''}>${esc(hora(r))} hs</button>`).join('')}</div>
+      `<button data-reunion="${esc(r)}" aria-pressed="${r === ent.reunion}">${esc(hora(r))} hs</button>`).join('')}</div>
     <div class="materiales">${MATERIALES.map(([m, para]) => {
       const n = Number(fila[m]) || 0;
       return `<div class="material">
@@ -603,23 +912,26 @@ function sumar(material, cuanto) {
     }
     guardado.escribir('datos', JSON.stringify(estado.datos));
     if (fecha === ent.fecha && reunion === ent.reunion) vistaEntregas();
+    vistaStock();
   });
 }
 
 // ---------- navegacion y eventos ----------
+
+const VISTAS = ['hoy', 'turnos', 'entregas', 'eventos', 'stock', 'info', 'manual'];
 
 function mostrar(vista) {
   document.querySelectorAll('nav button').forEach(b => {
     if (b.dataset.vista === vista) b.setAttribute('aria-current', 'page');
     else b.removeAttribute('aria-current');
   });
-  ['hoy', 'turnos', 'entregas', 'manual'].forEach(v => { $('#v-' + v).hidden = v !== vista; });
+  VISTAS.forEach(v => { $('#v-' + v).hidden = v !== vista; });
   guardado.escribir('vista', vista);
   window.scrollTo(0, 0);
 }
 
 function pintar() {
-  vistaHoy(); vistaTurnos(); vistaEntregas(); vistaManual();
+  vistaHoy(); vistaTurnos(); vistaEntregas(); vistaEventos(); vistaStock(); vistaInfo(); vistaManual();
 }
 
 document.addEventListener('click', e => {
@@ -636,11 +948,20 @@ document.addEventListener('click', e => {
   if (flecha && flecha.dataset.mes) { estado.mes = flecha.dataset.mes; return vistaTurnos(); }
   if (e.target.id === 'actualizar') return cargar();
   const hor = e.target.closest('[data-reunion]');
-  if (hor) { ent.reunion = hor.dataset.reunion; return vistaEntregas(); }
+  if (hor) { ent.reunion = hor.dataset.reunion; ent.elegida = true; return vistaEntregas(); }
   const dom = e.target.closest('[data-ent-fecha]');
-  if (dom && dom.dataset.entFecha) { ent.fecha = dom.dataset.entFecha; ent.reunion = null; return vistaEntregas(); }
+  if (dom && dom.dataset.entFecha) { ent.fecha = dom.dataset.entFecha; ent.reunion = null; ent.elegida = false; return vistaEntregas(); }
   const toque = e.target.closest('[data-sumar]');
   if (toque) return sumar(toque.dataset.material, Number(toque.dataset.sumar));
+  const ir = e.target.closest('[data-ir]');
+  if (ir) return mostrar(ir.dataset.ir);
+  const sf = e.target.closest('[data-stock-form]');
+  if (sf && !stk.guardando) { stk.form = sf.dataset.stockForm === stk.form ? null : (sf.dataset.stockForm || null); stk.error = ''; return vistaStock(); }
+});
+document.addEventListener('submit', e => {
+  if (e.target.id !== 'formStock') return;
+  e.preventDefault();
+  if (!stk.guardando) guardarStock(e.target);
 });
 document.addEventListener('change', e => {
   if (e.target.id === 'soloMios') { estado.soloMios = e.target.checked; vistaTurnos(); }
@@ -665,7 +986,8 @@ function arrancar(datos) {
   pintar();
   // #turnos o #manual en el link abren directo esa pestaña
   const pedida = location.hash.slice(1);
-  mostrar(['hoy', 'turnos', 'entregas', 'manual'].includes(pedida) ? pedida : (guardado.leer('vista') || 'hoy'));
+  const ultima = guardado.leer('vista');
+  mostrar(VISTAS.includes(pedida) ? pedida : (VISTAS.includes(ultima) ? ultima : 'hoy'));
 }
 
 async function cargar() {
