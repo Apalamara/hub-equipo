@@ -156,6 +156,13 @@ section[hidden] { display: none; }
 .contador button:disabled { opacity: .35; }
 .guardando { color: var(--gris); font-size: 13px; min-height: 1.2em; }
 .guardando.error { color: var(--alerta); font-weight: 500; }
+.sin-cargar { color: var(--azul); font-weight: 600; font-size: 14px; min-height: 1.3em; }
+.carga { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+.carga .boton.primario { min-height: 56px; padding: 10px 40px; font: 600 20px Outfit, sans-serif; }
+.carga .guardando { flex: 1 1 220px; font-size: 15px; }
+.guardando.ok { color: #18794e; font-weight: 500; }
+.guardando.por-cargar { color: var(--azul); font-weight: 500; }
+.horarios button.con-pendiente::after, nav button.con-pendiente::after { content: ' •'; color: #e5484d; }
 .totales { margin-top: 20px; color: var(--gris); }
 .totales b { color: var(--tinta); }
 
@@ -736,7 +743,7 @@ const STOCK = [
   ['Tarjetas', 'imprimir'],
 ];
 const MINIMOS = { Chocolates: 10, Bolsas: 50, Biblias: 30, Tarjetas: 50 }; // si el Sheet tiene una fila "Mínimo", manda esa
-const stk = { form: null, guardando: false, error: '' };
+const stk = { form: null, guardando: false, error: '', ok: '', valores: {} };
 
 function momento(fecha, h) {
   if (!h) return fecha + ' 99:99';
@@ -796,7 +803,8 @@ function vistaStock() {
     <div class="acciones">
       <button class="boton${stk.form === 'Recuento' ? ' primario' : ''}" data-stock-form="Recuento">Contamos lo que hay</button>
       <button class="boton${stk.form === 'Compra' ? ' primario' : ''}" data-stock-form="Compra">Llegó una compra</button>
-    </div>`;
+    </div>
+    ${stk.ok ? `<div class="guardando ok" style="margin-top:12px;font-size:15px">${esc(stk.ok)}</div>` : ''}`;
 
   if (stk.form) {
     const esRec = stk.form === 'Recuento';
@@ -804,10 +812,10 @@ function vistaStock() {
       <h3>${esRec ? 'Recuento' : 'Compra'}</h3>
       <p class="sub">${esRec ? 'Contá lo que hay ahora mismo. Lo que no contaste, dejalo vacío.' : 'Cuánto llegó de cada cosa. Lo que no se compró, dejalo vacío.'}</p>
       <div class="campos">${STOCK.map(([m]) => `
-        <label>${m}<input type="number" inputmode="numeric" min="0" max="10000" name="${m}"></label>`).join('')}</div>
-      <label class="nota-campo">Nota (opcional)<input type="text" name="nota" maxlength="200"></label>
+        <label>${m}<input type="number" inputmode="numeric" min="0" max="10000" name="${m}" value="${esc(stk.valores[m] || '')}"></label>`).join('')}</div>
+      <label class="nota-campo">Nota (opcional)<input type="text" name="nota" maxlength="200" value="${esc(stk.valores.nota || '')}"></label>
       <div class="acciones" style="margin-top:14px">
-        <button class="boton primario" type="submit" ${stk.guardando ? 'disabled' : ''}>${stk.guardando ? 'Guardando…' : 'Guardar'}</button>
+        <button class="boton primario" type="submit" ${stk.guardando ? 'disabled' : ''}>${stk.guardando ? 'Cargando…' : 'Cargar'}</button>
         <button class="boton" type="button" data-stock-form="">Cancelar</button>
       </div>
       <div class="guardando${stk.error ? ' error' : ''}">${esc(stk.error)}</div>
@@ -826,19 +834,23 @@ function vistaStock() {
 async function guardarStock(form) {
   const valores = {};
   STOCK.forEach(([m]) => { const v = form.elements[m].value.trim(); if (v !== '') valores[m] = Number(v); });
+  const nota = form.elements.nota.value.trim();
+  // Lo escrito queda en pantalla mientras se carga y si algo falla.
+  stk.valores = { ...valores, nota };
   if (!Object.keys(valores).length) { stk.error = 'Poné al menos una cantidad.'; return vistaStock(); }
-  stk.guardando = true; stk.error = '';
+  stk.guardando = true; stk.error = ''; stk.ok = '';
   vistaStock();
   try {
     const r = await fetch(API, { method: 'POST', body: JSON.stringify({
-      clave: clave(), accion: 'stock', tipo: stk.form, valores, nota: form.elements.nota.value.trim() }) });
+      clave: clave(), accion: 'stock', tipo: stk.form, valores, nota }) });
     const j = await r.json();
     if (j.error) throw new Error(j.error);
     (estado.datos.Stock = estado.datos.Stock || []).push(j.fila);
     guardado.escribir('datos', JSON.stringify(estado.datos));
-    stk.form = null;
+    stk.ok = `✓ ${stk.form} cargado a las ${horaAhora()}: ${Object.entries(valores).map(([m, n]) => `${m} ${n}`).join(' · ')}`;
+    stk.form = null; stk.valores = {};
   } catch (err) {
-    stk.error = 'No se guardó. Revisá la conexión y probá de nuevo.';
+    stk.error = 'No se cargó. Revisá la conexión y tocá Cargar de nuevo.';
   }
   stk.guardando = false;
   vistaStock();
@@ -851,7 +863,27 @@ const MATERIALES = [
   ['Bolsas', 'segunda vez'],
   ['Biblias', 'aceptaron a Jesús'],
 ];
-const ent = { fecha: null, reunion: null, elegida: false, pendientes: 0, error: '' };
+const ent = { fecha: null, reunion: null, elegida: false, enviando: false, error: '', ok: null, sinCargar: leerSinCargar() };
+
+function horaAhora() {
+  const h = new Date();
+  return `${String(h.getHours()).padStart(2, '0')}:${String(h.getMinutes()).padStart(2, '0')}`;
+}
+
+// Lo que se toco y todavia no se cargo: { 'AAAA-MM-DD|10:00': { Chocolates: 3 } }.
+// Queda guardado en el dispositivo (sobrevive si el iPad se bloquea o se
+// recarga la pagina). Solo vale para hoy: otro dia ese domingo ya esta cerrado.
+function leerSinCargar() {
+  let todo = {};
+  try { todo = JSON.parse(guardado.leer('sinCargar')) || {}; } catch (e) {}
+  const hoy = iso(new Date());
+  Object.keys(todo).forEach(k => { if (!k.startsWith(hoy + '|')) delete todo[k]; });
+  return todo;
+}
+function escribirSinCargar() { guardado.escribir('sinCargar', JSON.stringify(ent.sinCargar)); }
+const claveCarga = (fecha, reunion) => fecha + '|' + reunion;
+function sinCargarDe(fecha, reunion) { return ent.sinCargar[claveCarga(fecha, reunion)] || {}; }
+const conSigno = n => (n > 0 ? '+' : '') + n;
 
 // Para anotar: hoy si es domingo; si no, el ultimo domingo (para cargar tarde).
 function domingoParaAnotar() {
@@ -890,7 +922,7 @@ function puedeAnotar(fecha, reunion) {
 // horario siguiente, aunque el iPad quede abierto en Entregas toda la mañana
 // (salvo que alguien haya elegido otro horario a mano).
 setInterval(() => {
-  if (estado.datos && !$('#v-entregas').hidden && !ent.pendientes) vistaEntregas();
+  if (estado.datos && !$('#v-entregas').hidden && !ent.enviando) vistaEntregas();
 }, 60000);
 
 function filaEntrega(fecha, reunion) {
@@ -904,7 +936,9 @@ function vistaEntregas() {
   // Solo se anota el domingo de hoy. Arranca en la reunion en curso, pero se
   // puede pasar a otro horario. Los domingos pasados se miran, sin tocar.
   const actual = esDomingoHoy(ent.fecha) ? reunionActual(ent.fecha, lista) : null;
-  if (actual && !ent.elegida) ent.reunion = actual;
+  // Con algo sin cargar la pantalla no cambia de horario sola.
+  const fijada = ent.reunion && lista.includes(ent.reunion) && Object.keys(sinCargarDe(ent.fecha, ent.reunion)).length;
+  if (actual && !ent.elegida && !fijada) ent.reunion = actual;
   else if (!ent.reunion || !lista.includes(ent.reunion)) ent.reunion = lista[0];
   const editable = puedeAnotar(ent.fecha, ent.reunion);
   const d = fechaDe(ent.fecha);
@@ -912,6 +946,9 @@ function vistaEntregas() {
   const sig = new Date(d); sig.setDate(d.getDate() + 7);
   const puedeSig = iso(sig) <= domingoParaAnotar();
   const fila = filaEntrega(ent.fecha, ent.reunion) || {};
+  const falta = editable ? sinCargarDe(ent.fecha, ent.reunion) : {};
+  const hayFalta = Object.keys(falta).length > 0;
+  const ok = ent.ok && ent.ok.fecha === ent.fecha && ent.ok.reunion === ent.reunion ? ent.ok.texto : '';
   const del = estado.datos.Entregas.filter(f => f.Fecha === ent.fecha);
   const total = m => del.reduce((a, f) => a + (Number(f[m]) || 0), 0);
 
@@ -925,55 +962,92 @@ function vistaEntregas() {
       <button class="flecha" data-ent-fecha="${puedeSig ? iso(sig) : ''}" ${puedeSig ? '' : 'disabled'} aria-label="Domingo siguiente">›</button>
     </div>
     <div class="horarios">${lista.map(r =>
-      `<button data-reunion="${esc(r)}" aria-pressed="${r === ent.reunion}">${esc(hora(r))} hs</button>`).join('')}</div>
+      `<button data-reunion="${esc(r)}" aria-pressed="${r === ent.reunion}"${Object.keys(sinCargarDe(ent.fecha, r)).length ? ' class="con-pendiente"' : ''}>${esc(hora(r))} hs</button>`).join('')}</div>
     <div class="materiales">${MATERIALES.map(([m, para]) => {
-      const n = Number(fila[m]) || 0;
+      const n = (Number(fila[m]) || 0) + (falta[m] || 0);
       return `<div class="material">
         <div><h3>${m}</h3><small>${para}</small></div>
         <div class="contador">
-          <button data-sumar="-1" data-material="${m}" ${n && editable ? '' : 'disabled'} aria-label="Restar ${m}">−</button>
+          <button data-sumar="-1" data-material="${m}" ${n && editable && !ent.enviando ? '' : 'disabled'} aria-label="Restar ${m}">−</button>
           <span class="num">${n}</span>
-          <button class="mas" data-sumar="1" data-material="${m}" ${editable ? '' : 'disabled'} aria-label="Sumar ${m}">+</button>
+          <button class="mas" data-sumar="1" data-material="${m}" ${editable && !ent.enviando ? '' : 'disabled'} aria-label="Sumar ${m}">+</button>
         </div>
+        <div class="sin-cargar">${falta[m] ? `${conSigno(falta[m])} sin cargar` : ''}</div>
       </div>`;
     }).join('')}</div>
-    <div class="guardando${ent.error ? ' error' : ''}" style="margin-top:14px">${
-      ent.error ? esc(ent.error) : ent.pendientes ? 'Guardando…'
-        : editable ? 'Cada toque se guarda en el Sheet.' : 'Domingo cerrado: solo para mirar.'}</div>
+    <div class="carga">
+      ${editable ? `<button class="boton primario" id="cargarEntregas" ${hayFalta && !ent.enviando ? '' : 'disabled'}>${ent.enviando ? 'Cargando…' : 'Cargar'}</button>
+      ${hayFalta && !ent.enviando ? '<button class="boton" id="deshacerEntregas">Deshacer</button>' : ''}` : ''}
+      <div class="guardando${ent.error ? ' error' : ent.enviando ? '' : hayFalta ? ' por-cargar' : ok ? ' ok' : ''}">${
+        ent.error ? esc(ent.error) : ent.enviando ? 'No cierres la página…'
+          : hayFalta ? 'Todavía no está cargado: tocá Cargar para confirmar.'
+          : ok ? esc(ok)
+          : editable ? 'Tocá + o − y después Cargar.' : 'Domingo cerrado: solo para mirar.'}</div>
+    </div>
     <div class="totales">Todo el domingo: <b>${total('Chocolates')}</b> chocolates · <b>${total('Bolsas')}</b> bolsas · <b>${total('Biblias')}</b> Biblias</div>`;
+  $('nav [data-vista="entregas"]').classList.toggle('con-pendiente', Object.keys(ent.sinCargar).length > 0);
 }
 
-// El numero cambia al instante y el pedido sale por detras, uno atras del
-// otro. Cuando el Sheet contesta, manda su numero: es el que cuenta de verdad.
-let cola = Promise.resolve();
-function sumar(material, cuanto) {
+// Los toques no salen: se acumulan hasta que alguien toca Cargar.
+function tocar(material, cuanto) {
   const fecha = ent.fecha, reunion = ent.reunion;
+  if (ent.enviando) return;
   if (!puedeAnotar(fecha, reunion)) return vistaEntregas();
-  let fila = filaEntrega(fecha, reunion);
-  if (!fila) { fila = { Fecha: fecha, 'Reunión': reunion, Chocolates: 0, Bolsas: 0, Biblias: 0 }; estado.datos.Entregas.push(fila); }
-  const antes = Number(fila[material]) || 0;
-  if (antes + cuanto < 0) return;
-  fila[material] = antes + cuanto;
-  ent.pendientes++; ent.error = '';
+  const k = claveCarga(fecha, reunion);
+  const falta = ent.sinCargar[k] || {};
+  const fila = filaEntrega(fecha, reunion) || {};
+  const nuevo = (falta[material] || 0) + cuanto;
+  if ((Number(fila[material]) || 0) + nuevo < 0) return;
+  if (nuevo) falta[material] = nuevo; else delete falta[material];
+  if (Object.keys(falta).length) ent.sinCargar[k] = falta; else delete ent.sinCargar[k];
+  ent.error = ''; ent.ok = null;
+  escribirSinCargar();
   vistaEntregas();
+}
 
-  cola = cola.then(async () => {
-    try {
-      const r = await fetch(API, { method: 'POST', body: JSON.stringify({
-        clave: clave(), accion: 'sumar', fecha, reunion, material, cuanto }) });
-      const j = await r.json();
-      if (j.error) throw new Error(j.error);
-      ent.pendientes--;
-      if (!ent.pendientes) fila[material] = j.valor;
-    } catch (err) {
-      ent.pendientes--;
-      fila[material] = Math.max(0, (Number(fila[material]) || 0) - cuanto);
-      ent.error = 'No se guardó el último toque. Revisá la conexión y tocá de nuevo.';
+function deshacerEntregas() {
+  delete ent.sinCargar[claveCarga(ent.fecha, ent.reunion)];
+  ent.error = ''; ent.ok = null;
+  escribirSinCargar();
+  vistaEntregas();
+}
+
+// Manda lo acumulado. El script suma de a 10 como maximo por pedido. Lo que ya
+// salio se descuenta en el momento: si se corta a la mitad, en pantalla queda
+// solo lo que falta, y Cargar de nuevo no repite lo anterior.
+async function cargarEntregas() {
+  const fecha = ent.fecha, reunion = ent.reunion, k = claveCarga(fecha, reunion);
+  const falta = ent.sinCargar[k];
+  if (ent.enviando || !falta || !puedeAnotar(fecha, reunion)) return;
+  const resumen = Object.entries(falta).map(([m, n]) => `${m} ${conSigno(n)}`).join(' · ');
+  ent.enviando = true; ent.error = ''; ent.ok = null;
+  vistaEntregas();
+  try {
+    for (const material of Object.keys(falta)) {
+      while (falta[material]) {
+        const cuanto = Math.max(-10, Math.min(10, falta[material]));
+        const r = await fetch(API, { method: 'POST', body: JSON.stringify({
+          clave: clave(), accion: 'sumar', fecha, reunion, material, cuanto }) });
+        const j = await r.json();
+        if (j.error) throw new Error(j.error);
+        let fila = filaEntrega(fecha, reunion);
+        if (!fila) { fila = { Fecha: fecha, 'Reunión': reunion, Chocolates: 0, Bolsas: 0, Biblias: 0 }; estado.datos.Entregas.push(fila); }
+        fila[material] = j.valor;
+        falta[material] -= cuanto;
+        if (!falta[material]) delete falta[material];
+        escribirSinCargar();
+        guardado.escribir('datos', JSON.stringify(estado.datos));
+      }
     }
-    guardado.escribir('datos', JSON.stringify(estado.datos));
-    if (fecha === ent.fecha && reunion === ent.reunion) vistaEntregas();
-    vistaStock();
-  });
+    delete ent.sinCargar[k];
+    escribirSinCargar();
+    ent.ok = { fecha, reunion, texto: `✓ Cargado a las ${horaAhora()} · ${hora(reunion)} hs: ${resumen}` };
+  } catch (err) {
+    ent.error = 'No se cargó todo. Lo que dice "sin cargar" falta: revisá la conexión y tocá Cargar de nuevo.';
+  }
+  ent.enviando = false;
+  vistaEntregas();
+  vistaStock();
 }
 
 // ---------- navegacion y eventos ----------
@@ -1012,11 +1086,13 @@ document.addEventListener('click', e => {
   const dom = e.target.closest('[data-ent-fecha]');
   if (dom && dom.dataset.entFecha) { ent.fecha = dom.dataset.entFecha; ent.reunion = null; ent.elegida = false; return vistaEntregas(); }
   const toque = e.target.closest('[data-sumar]');
-  if (toque) return sumar(toque.dataset.material, Number(toque.dataset.sumar));
+  if (toque) return tocar(toque.dataset.material, Number(toque.dataset.sumar));
+  if (e.target.id === 'cargarEntregas') return cargarEntregas();
+  if (e.target.id === 'deshacerEntregas') return deshacerEntregas();
   const ir = e.target.closest('[data-ir]');
   if (ir) return mostrar(ir.dataset.ir);
   const sf = e.target.closest('[data-stock-form]');
-  if (sf && !stk.guardando) { stk.form = sf.dataset.stockForm === stk.form ? null : (sf.dataset.stockForm || null); stk.error = ''; return vistaStock(); }
+  if (sf && !stk.guardando) { stk.form = sf.dataset.stockForm === stk.form ? null : (sf.dataset.stockForm || null); stk.error = ''; stk.ok = ''; stk.valores = {}; return vistaStock(); }
 });
 document.addEventListener('submit', e => {
   if (e.target.id !== 'formStock') return;
