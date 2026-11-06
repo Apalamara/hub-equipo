@@ -12,16 +12,18 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Outfit:wght@500;600;700&family=Aleo:wght@500;600&display=swap" rel="stylesheet">
 <style>
-/* Paleta tomada de la app del Desafio de las cinco semanas, para que las
-   herramientas de la iglesia se sientan de la misma familia. */
+/* Paleta del Hub: el celeste del logo y del Manual, un poco mas oscuro
+   para que el texto blanco sobre los botones se lea bien. */
 :root {
-  --azul: #2459c9;
-  --azul-claro: #eaf1ff;
-  --azul-medio: #b8caf2;
+  --azul: #1f74b5;
+  --azul-claro: #e8f4fc;
+  --azul-medio: #b5d6ef;
   --tinta: #162138;
   --gris: #627087;
-  --borde: #dbe3f2;
-  --fondo: #f8faff;
+  --borde: #d9e6f1;
+  --fondo: #f6fafd;
+  --ambar: #8a5a00;
+  --ambar-claro: #fff1cc;
   --blanco: #ffffff;
   --verde: #14945d;
   --verde-claro: #e7f4ec;
@@ -39,6 +41,8 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 h1, h2, h3, .num { font-family: Outfit, sans-serif; letter-spacing: -0.01em; margin: 0; }
+/* titulos de cada pestaña con la letra del Manual */
+main h1, .mesbar h2 { font-family: Aleo, Georgia, serif; font-weight: 600; line-height: 1.15; color: var(--azul); letter-spacing: 0; }
 button { font: inherit; color: inherit; cursor: pointer; }
 
 /* ---------- encabezado y navegacion ---------- */
@@ -180,6 +184,7 @@ section[hidden] { display: none; }
 .item small { color: var(--gris); font-size: 13px; }
 .pill { align-self: flex-start; border-radius: 8px; padding: 3px 10px; font-weight: 700; font-size: 14px; background: var(--verde-claro); color: var(--verde); }
 .item.bajo .pill { background: var(--alerta); color: #fff; }
+.item.poco .pill { background: var(--ambar-claro); color: var(--ambar); }
 .acciones { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
 .boton {
   border: 1px solid var(--borde); background: var(--blanco); border-radius: 12px;
@@ -351,10 +356,13 @@ body { overflow-x: clip; }
 @media (max-width: 560px) {
   .barra { padding: 12px 16px; }
   main { padding: 20px 16px 48px; }
-  /* seis pestañas no entran en un celular: la barra se desliza de costado */
-  nav { width: 100%; overflow-x: auto; scrollbar-width: none; }
-  nav::-webkit-scrollbar { display: none; }
-  nav button { flex: 1 0 auto; padding: 9px 12px; }
+  /* en el celular el encabezado es solo el menu, en una linea, y las cinco
+     pestañas entran sin deslizar (la marca ya esta en el icono y el Manual) */
+  .barra { padding: 8px 12px; }
+  .marca { display: none; }
+  nav { width: 100%; gap: 2px; }
+  nav button { flex: 1 1 auto; padding: 8px 4px; font-size: 15px; min-height: 42px; }
+  .mesbar h2 { font-size: 26px; }
   .turno .gente { margin-left: 0; width: 100%; }
   .ficha { grid-template-columns: 56px 1fr auto; gap: 12px; padding: 12px; }
   .ficha .miniatura img { width: 64px; height: 64px; }
@@ -778,6 +786,8 @@ function calcularStock() {
     const porDomingo = domingos.length ? entregas.filter(f => domingos.includes(f.Fecha))
       .reduce((a, f) => a + (Number(f[col]) || 0), 0) / domingos.length : 0;
     if (porDomingo >= 0.5) item.dura = Math.floor(item.queda / porDomingo);
+    // sobre el minimo pero para dos domingos o menos: avisar antes de que falte
+    item.poco = !item.bajo && item.dura != null && item.dura <= 2;
     return item;
   });
 }
@@ -794,10 +804,10 @@ function vistaStock() {
     <h1 style="font-size:clamp(30px,4.4vw,44px)">Lo que nos queda</h1>
     <p class="sub">Sale del último recuento, más lo que se compró, menos lo que se entregó después.</p>
     <div class="stock">${items.map(i => `
-      <div class="item${i.bajo ? ' bajo' : ''}">
+      <div class="item${i.bajo ? ' bajo' : i.poco ? ' poco' : ''}">
         <h3>${i.nombre}</h3>
         <div class="num">${i.queda == null ? '—' : i.queda}</div>
-        <span class="pill">${i.queda == null ? 'Sin recuento' : i.bajo ? 'Hay que ' + i.accion : 'Alcanza'}</span>
+        <span class="pill">${i.queda == null ? 'Sin recuento' : i.bajo ? 'Hay que ' + i.accion : i.poco ? 'Comprar pronto' : 'Alcanza'}</span>
         <small>Mínimo ${i.min}${i.dura == null ? '' : i.dura ? ` · alcanza para ~${i.dura} domingo${i.dura === 1 ? '' : 's'}` : ' · no llega a un domingo'}</small>
         ${i.rec ? `<small>Contado el ${fechaCorta(i.rec.Fecha)}</small>` : ''}
         ${i.nombre === 'Tarjetas' ? '<small>Se gasta una con cada chocolate</small>' : ''}
